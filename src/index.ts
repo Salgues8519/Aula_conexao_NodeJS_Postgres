@@ -49,6 +49,31 @@ app.get('/', async (req:Request, res:Response) =>{       //Pool
     }
 })
 
+app.get('/funcionarios', async (req, res)=>{
+    const { pagina = 1, porPagina = 10 } = req.query
+
+    const offset = pagina === 1 ? 0 : (Number(pagina) - 1) * Number(pagina)
+
+    try {
+        const query = 'select * from pessoas order by id asc limit $1 offset $2'
+        const {rows} = await conexao.query(query, [porPagina, offset])
+        const totalRegistros = await conexao.query('select count(*) from pessoas')
+        const resposta = {
+            pagina,
+            porPagina, 
+            total: totalRegistros.rows[0].count,
+            registros: rows
+        }
+
+        return res.json(resposta)
+    } catch (error) {
+        const erro = error as Error
+    return res.status(400).json(erro.message)
+    }
+})
+
+
+
 app.get('/:id', async (req:Request, res:Response) =>{       //Pool
     const {id} = req.params
     try {
@@ -88,6 +113,9 @@ app.get('/:id', async (req:Request, res:Response) =>{       //Pool
     return res.status(400).json(erro.message)
    }
 })
+
+
+
 
 app.listen(process.env.PORT, ()=>{
     console.log('Servidor inicializado');
